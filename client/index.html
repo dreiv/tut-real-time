@@ -80,6 +80,7 @@
       }
       button:hover:not(:disabled) {
         border-color: #444;
+        color: #000;
         background: #f0f0f0;
         cursor: pointer;
       }
@@ -112,7 +113,7 @@
         outline-offset: 1px;
       }
 
-      code-box,
+      pre,
       #chat-box {
         display: block;
         border: 1px solid #ccc;
@@ -179,7 +180,7 @@
           over a regular HTTP request connection.
         </p>
         <button id="start-stream">Trigger Stream Fetch</button>
-        <code-box id="stream-output"></code-box>
+        <pre id="stream-output"></pre>
       </section>
 
       <section id="panel-sse" class="panel">
