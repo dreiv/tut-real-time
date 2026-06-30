@@ -1,0 +1,12 @@
+import express from "express";
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.get("/health", (req, res) => {
+  res.json({ status: "alive", protocol: "ws-chat-service" });
+});
+
+app.listen(PORT, () => {
+  console.log("🚀 ws-chat-service running on http://localhost:" + PORT);
+});

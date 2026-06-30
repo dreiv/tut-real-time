@@ -1,0 +1,17 @@
+{
+  "name": "tut-real-time-workspace",
+  "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "client",
+    "servers/*"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev -w client",
+    "dev:streaming": "npm run dev -w servers/streaming-response",
+    "dev:sse": "npm run dev -w servers/sse-dashboard",
+    "dev:ws": "npm run dev -w servers/ws-chat"
+  }
+}
