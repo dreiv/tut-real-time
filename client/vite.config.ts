@@ -11,6 +11,11 @@ export default defineConfig({
     proxy: {
       "/api/stream": { target: "http://localhost:3001", changeOrigin: true },
       "/api/sse": { target: "http://localhost:3002", changeOrigin: true },
+      "/api/ws": {
+        target: "http://localhost:3003",
+        ws: true,
+        changeOrigin: true,
+      },
     },
   },
 });
