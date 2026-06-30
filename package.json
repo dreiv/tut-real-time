@@ -3,8 +3,9 @@
   "private": true,
   "workspaces": [
     "client",
-    "servers/streaming-response",
     "servers/sse-dashboard",
+    "servers/streaming-response",
+    "servers/webrtc-signaling",
     "servers/ws-chat"
   ],
   "packageManager": "npm@11.12.1",

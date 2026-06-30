@@ -168,3 +168,153 @@ chatForm.addEventListener("submit", (e) => {
   chatInput.value = "";
   chatInput.focus();
 });
+
+// ============================================================================
+// 5. PROTOCOL LAB 4: PEER-TO-PEER WEBRTC
+// ============================================================================
+const rtcConnectSignalingBtn = document.getElementById(
+  "rtc-connect-signaling",
+) as HTMLButtonElement;
+const rtcInitiateP2PBtn = document.getElementById(
+  "rtc-initiate-p2p",
+) as HTMLButtonElement;
+const rtcDisconnectBtn = document.getElementById(
+  "rtc-disconnect-btn",
+) as HTMLButtonElement;
+const rtcBox = document.getElementById("rtc-box")!;
+const rtcForm = document.getElementById("rtc-form") as HTMLFormElement;
+const rtcInput = document.getElementById("rtc-input") as HTMLInputElement;
+const rtcSendBtn = document.getElementById("rtc-send-btn") as HTMLButtonElement;
+
+let signalingSocket: WebSocket | null = null;
+let peerConnection: RTCPeerConnection | null = null;
+let dataChannel: RTCDataChannel | null = null;
+
+// --- UI HELPERS ---
+function appendRtcLog(sender: string, text: string) {
+  const msgDiv = document.createElement("div");
+  msgDiv.innerHTML = `<strong>[${sender}]:</strong> <span>${text}</span>`;
+  rtcBox.appendChild(msgDiv);
+  rtcBox.scrollTop = rtcBox.scrollHeight;
+}
+
+function setRtcUIState(phase: "disconnected" | "signaling" | "connected") {
+  rtcConnectSignalingBtn.disabled = phase !== "disconnected";
+  rtcInitiateP2PBtn.disabled = phase !== "signaling";
+  rtcDisconnectBtn.disabled = phase === "disconnected";
+  rtcInput.disabled = phase !== "connected";
+  rtcSendBtn.disabled = phase !== "connected";
+}
+
+// --- 1. SIGNALING HANDSHAKE ---
+rtcConnectSignalingBtn.addEventListener("click", () => {
+  // Assuming your standalone signaling server is now bound to 3004
+  signalingSocket = new WebSocket(`ws://localhost:3004`);
+  appendRtcLog("Signaling", "Connecting to socket relay...");
+
+  signalingSocket.onopen = () => {
+    setRtcUIState("signaling");
+    appendRtcLog("Signaling", "Ready. Open another tab.");
+    initializePeerConnection();
+  };
+
+  signalingSocket.onmessage = async (event) => {
+    const { rtc } = JSON.parse(event.data);
+    if (!rtc || !peerConnection) return;
+
+    try {
+      if (rtc.sdp) {
+        await peerConnection.setRemoteDescription(
+          new RTCSessionDescription(rtc.sdp),
+        );
+        if (rtc.sdp.type === "offer") {
+          const answer = await peerConnection.createAnswer();
+          await peerConnection.setLocalDescription(answer);
+          signalingSocket?.send(
+            JSON.stringify({ rtc: { sdp: peerConnection.localDescription } }),
+          );
+        }
+      } else if (rtc.candidate) {
+        await peerConnection.addIceCandidate(
+          new RTCIceCandidate(rtc.candidate),
+        );
+      }
+    } catch (err) {
+      console.error("Signaling error:", err);
+    }
+  };
+
+  signalingSocket.onclose = teardownRTC;
+});
+
+// --- 2. WEBRTC ENGINE ---
+function initializePeerConnection() {
+  peerConnection = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  });
+
+  peerConnection.onicecandidate = (e) => {
+    if (e.candidate)
+      signalingSocket?.send(
+        JSON.stringify({ rtc: { candidate: e.candidate } }),
+      );
+  };
+
+  peerConnection.ondatachannel = (e) => {
+    dataChannel = e.channel;
+    setupDataChannelListeners();
+  };
+}
+
+rtcInitiateP2PBtn.addEventListener("click", async () => {
+  if (!peerConnection) return;
+  setRtcUIState("disconnected"); // Temp disable while negotiating
+
+  dataChannel = peerConnection.createDataChannel("lab-text-pipe");
+  setupDataChannelListeners();
+
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  signalingSocket?.send(
+    JSON.stringify({ rtc: { sdp: peerConnection.localDescription } }),
+  );
+});
+
+// --- 3. DATA CHANNEL P2P ---
+function setupDataChannelListeners() {
+  if (!dataChannel) return;
+
+  dataChannel.onopen = () => {
+    setRtcUIState("connected");
+    appendRtcLog("WebRTC P2P", "🚀 DIRECT CONNECTION OPENED!");
+  };
+
+  dataChannel.onmessage = (e) => appendRtcLog("Remote Peer", e.data);
+  dataChannel.onclose = teardownRTC;
+}
+
+// --- 4. CHAT & TEARDOWN ---
+rtcForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const text = rtcInput.value.trim();
+  if (!text || dataChannel?.readyState !== "open") return;
+
+  dataChannel.send(text);
+  appendRtcLog("You (P2P)", text);
+  rtcInput.value = "";
+});
+
+rtcDisconnectBtn.addEventListener("click", teardownRTC);
+
+function teardownRTC() {
+  dataChannel?.close();
+  peerConnection?.close();
+  signalingSocket?.close();
+
+  dataChannel = null;
+  peerConnection = null;
+  signalingSocket = null;
+
+  setRtcUIState("disconnected");
+  appendRtcLog("System", "All connections closed.");
+}

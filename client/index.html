@@ -114,7 +114,8 @@
       }
 
       pre,
-      #chat-box {
+      #chat-box,
+      #rtc-box {
         display: block;
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -127,7 +128,8 @@
         box-sizing: border-box;
         background: #fafafa;
       }
-      #chat-box {
+      #chat-box,
+      #rtc-box {
         height: 220px;
         overflow-y: auto;
       }
@@ -170,6 +172,7 @@
       </button>
       <button class="tab-btn" data-target="panel-sse">2. SSE Dashboard</button>
       <button class="tab-btn" data-target="panel-ws">3. WebSockets Chat</button>
+      <button class="tab-btn" data-target="panel-webrtc">4. WebRTC P2P</button>
     </nav>
 
     <main>
@@ -242,6 +245,40 @@
             disabled
           />
           <button type="submit" id="chat-send-btn" disabled>Send</button>
+        </form>
+      </section>
+
+      <section id="panel-webrtc" class="panel">
+        <h2>Peer-to-Peer WebRTC Data Channel</h2>
+        <p>
+          Leverages a WebSocket signaling server to negotiate an immediate,
+          direct P2P connection between client windows.
+        </p>
+
+        <div
+          style="
+            margin-bottom: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+          "
+        >
+          <button id="rtc-connect-signaling">1. Connect Signaling</button>
+          <button id="rtc-initiate-p2p" disabled>2. Init P2P Connection</button>
+          <button id="rtc-disconnect-btn" disabled>Disconnect</button>
+        </div>
+
+        <div id="rtc-box"></div>
+
+        <form id="rtc-form" style="display: flex; gap: 8px; margin-top: 10px">
+          <input
+            type="text"
+            id="rtc-input"
+            placeholder="Send direct message to peer..."
+            style="flex: 1"
+            disabled
+          />
+          <button type="submit" id="rtc-send-btn" disabled>Send P2P</button>
         </form>
       </section>
     </main>
