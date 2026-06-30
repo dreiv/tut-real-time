@@ -40,6 +40,7 @@ startStreamBtn.addEventListener("click", async () => {
       const chunkText = decoder.decode(value, { stream: true });
       streamOutput.textContent += chunkText;
     }
+
     streamOutput.textContent += "\n\n[Finished Processing Buffer Chunks]";
   } catch (err) {
     streamOutput.textContent = `Streaming Error: ${err}`;

@@ -3,7 +3,7 @@ import express from "express";
 const app = express();
 const PORT = 3001;
 
-app.get("/api/stream", async (req, res) => {
+app.get("/api/stream", async (_, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
 
